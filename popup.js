@@ -17,7 +17,7 @@ const PROVIDERS = {
 
 const COLORS = ['blue','red','yellow','green','pink','purple','cyan','orange','grey'];
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// ─── State ───────────────────────────────────────────────────────────
 let state = {
   selectedProvider: 'claude',
   apiKeys: {},
@@ -27,7 +27,10 @@ let state = {
   customUrl: '',
 };
 
-// ─── Elements ─────────────────────────────────────────────────────────────────
+// ─── Prevent double-click grouping ───────────────────────────────────
+let isGrouping = false;
+
+// ─── Elements ──────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const providerGrid  = $('providerGrid');
 const apiKeyInput   = $('apiKey');
@@ -44,7 +47,7 @@ const chipsEl       = $('chips');
 const tabPill       = $('tabPill');
 const eyeBtn        = $('eyeBtn');
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─── Init ───────────────────────────────────────────────────────────
 async function init() {
   // Load saved state
   const saved = await chrome.storage.local.get(Object.keys(state));
@@ -108,7 +111,7 @@ function selectProvider(id, save = true) {
   if (save) saveState();
 }
 
-// ─── Events ───────────────────────────────────────────────────────────────────
+// ─── Events ──────────────────────────────────────────────────────────
 apiKeyInput.addEventListener('input', () => {
   state.apiKeys[state.selectedProvider] = apiKeyInput.value.trim();
   saveState();
@@ -141,20 +144,34 @@ eyeBtn.addEventListener('click', () => {
   eyeBtn.textContent = isPass ? '🙈' : '👁';
 });
 
-// ─── Group button ─────────────────────────────────────────────────────────────
+// ─── Group button (FIXED: prevent double-click) ────────────────────────────────
 groupBtn.addEventListener('click', async () => {
-  const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) { showStatus('Вставь API ключ выше', 'error'); return; }
-
-  const model = modelInput.value.trim();
-  if (!model) { showStatus('Укажи модель', 'error'); return; }
-
-  if (state.selectedProvider === 'custom' && !customUrlInput.value.trim()) {
-    showStatus('Укажи Base URL', 'error'); return;
+  // FIXED: Prevent double-click
+  if (isGrouping) {
+    showStatus('Already grouping... please wait', 'error');
+    return;
   }
 
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey) { 
+    showStatus('Please paste your API key above', 'error'); 
+    return; 
+  }
+
+  const model = modelInput.value.trim();
+  if (!model) { 
+    showStatus('Please specify a model', 'error'); 
+    return; 
+  }
+
+  if (state.selectedProvider === 'custom' && !customUrlInput.value.trim()) {
+    showStatus('Please specify Base URL for custom provider', 'error'); 
+    return;
+  }
+
+  isGrouping = true;
   setLoading(true);
-  showStatus('<span class="spin"></span> Думаю...', '');
+  showStatus('<span class="spin"></span> Thinking...', '');
   chipsEl.innerHTML = '';
 
   try {
@@ -170,33 +187,41 @@ groupBtn.addEventListener('click', async () => {
 
     if (res.error) throw new Error(res.error);
     renderChips(res.groups);
-    showStatus(`✓ Создано групп: ${res.groups.length}`, 'ok');
+    showStatus(`✓ Created ${res.groups.length} group(s)`, 'ok');
 
     // Update tab count
     tabPill.textContent = `${tabs.length} tabs`;
 
   } catch (e) {
-    showStatus(e.message || 'Ошибка', 'error');
+    console.error('Grouping error:', e);
+    showStatus(e.message || 'Error occurred', 'error');
   } finally {
+    isGrouping = false;
     setLoading(false);
   }
 });
 
-// ─── Ungroup ──────────────────────────────────────────────────────────────────
+// ─── Ungroup ──────────────────────────────────────────────────────────
 ungroupBtn.addEventListener('click', async () => {
-  const tabs = await chrome.tabs.query({ currentWindow: true });
-  // Ungroup all tabs
-  const ids = tabs.map(t => t.id);
-  try { await chrome.tabs.ungroup(ids); } catch (_) {}
-  chipsEl.innerHTML = '';
-  showStatus('Группы удалены', '');
+  if (isGrouping) return;
+  
+  try {
+    const tabs = await chrome.tabs.query({ currentWindow: true });
+    const ids = tabs.map(t => t.id);
+    await chrome.tabs.ungroup(ids);
+    chipsEl.innerHTML = '';
+    showStatus('All groups removed', '');
+  } catch (e) {
+    console.error('Ungroup error:', e);
+    showStatus('Error removing groups', 'error');
+  }
 });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────
 function setLoading(on) {
   groupBtn.disabled = on;
   $('btnSpinner').style.display = on ? 'inline' : 'none';
-  $('btnText').textContent = on ? 'Группирую...' : '✦ Group my tabs';
+  $('btnText').textContent = on ? 'Grouping...' : '✦ Group my tabs';
 }
 
 function showStatus(html, type) {
@@ -222,5 +247,5 @@ function saveState() {
   });
 }
 
-// ─── Run ──────────────────────────────────────────────────────────────────────
+// ─── Run ───────────────────────────────────────────────────────────
 init();
