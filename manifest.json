@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "TabMind",
+  "version": "1.0.0",
+  "description": "A minimalist Chromium extension that organizes your tab chaos using AI. Supports 12+ providers (OpenAI, Claude, Gemini) and local models (Ollama) directly in your browser.",
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TabMind - Organize your tabs with AI"
+  },
+  "icons": {
+    "128": "cover.png"
+  }
+}
