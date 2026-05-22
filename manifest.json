@@ -9,7 +9,20 @@
     "storage"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.groq.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.mistral.ai/*",
+    "https://openrouter.ai/*",
+    "https://api.x.ai/*",
+    "https://dashscope.aliyuncs.com/*",
+    "https://api.moonshot.cn/*",
+    "https://api.together.xyz/*",
+    "https://api.perplexity.ai/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -20,5 +33,6 @@
   },
   "icons": {
     "128": "cover.png"
-  }
+  },
+  "minimum_chrome_version": "88"
 }
