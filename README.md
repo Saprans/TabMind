@@ -1,7 +1,5 @@
-<h1 align="center">🧠 TabMind</h1>
-
 <p align="center">
-  <strong>Organize your tab chaos using the power of AI — directly in your browser.</strong>
+  <img src="cover.png" alt="TabMind Cover" width="100%">
 </p>
 
 <p align="center">
@@ -9,11 +7,6 @@
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-yellow.svg?style=flat-square" alt="Vanilla JS">
   <img src="https://img.shields.io/badge/Browser-Chromium-lightgrey.svg?style=flat-square" alt="Chromium Browsers">
   <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License MIT">
-</p>
-
-<p align="center">
-  <!-- TODO: Replace with the actual link to your screenshot/GIF -->
-  <img src="https://via.placeholder.com/800x400.png?text=TabMind+Screenshot+or+Demo+GIF" alt="TabMind Demo">
 </p>
 
 ---
@@ -26,7 +19,7 @@ Unlike alternatives, TabMind is not tied to a specific service and allows you to
 
 * **Multi-provider Support** — switch between 12+ AI services in a single click. API keys and model settings are saved individually for each provider.
 * **Smart Auto-grouping** — automatically triggers grouping when you exceed your custom limit of open tabs (e.g., more than 10).
-* **System Page Handling** — service tabs (`chrome://`, `about:`, blank pages) are never sent to the AI. They are safely and automatically collected into an "Other" group.
+* **System Page Handling** — service tabs (`chrome://`, `about:`, blank pages) are never sent to the AI. They are safely and automatically collected into an "Other" (Другое) group.
 * **Local Model Support** — seamlessly integrate with Ollama, LM Studio, or any other local/custom API compatible with the OpenAI format.
 * **Privacy-Focused** — the extension communicates directly with provider APIs without any intermediate servers. Your API keys are stored locally in your browser.
 
@@ -52,7 +45,7 @@ Unlike alternatives, TabMind is not tied to a specific service and allows you to
 
 Since the extension is currently in active development, you can install it manually via Developer mode:
 
-1. Download the project files and extract them into a separate folder (or clone this repository).
+1. Download the repository as a ZIP file and extract it into a folder.
 2. Open your browser and navigate to `chrome://extensions/`.
 3. In the top right corner, toggle on **Developer mode**.
 4. Click the **Load unpacked** button that appears in the top left corner.
