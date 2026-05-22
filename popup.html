@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>TabMind</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg: #0c0c12;
+  --bg2: #13131c;
+  --bg3: #1a1a26;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #eeeef5;
+  --muted: rgba(255,255,255,0.38);
+  --dim: rgba(255,255,255,0.18);
+  --accent: #7c6ff7;
+  --accent2: #a78bfa;
+  --success: #34d399;
+  --error: #f87171;
+  --radius: 9px;
+}
+
+body{
+  width:360px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:13px;
+  overflow:hidden;
+}
+
+/* ── Header ── */
+.hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 12px;
+  border-bottom:1px solid var(--border);
+}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{
+  width:26px;height:26px;
+  background:linear-gradient(135deg,#6c63ff,#c084fc);
+  border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:#fff;
+  letter-spacing:-0.5px;
+}
+.logo-name{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+.tab-pill{
+  font-size:11px;color:var(--muted);
+  background:var(--bg3);border:1px solid var(--border);
+  padding:3px 9px;border-radius:20px;
+}
+
+/* ── Sections ── */
+.section{padding:12px 16px;border-bottom:1px solid var(--border)}
+.label{
+  font-size:10px;font-weight:600;letter-spacing:0.7px;
+  color:var(--muted);text-transform:uppercase;margin-bottom:7px;
+}
+
+/* ── Provider grid ── */
+.provider-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:0;
+}
+.pvd-btn{
+  background:var(--bg3);border:1px solid var(--border);border-radius:7px;
+  padding:7px 4px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:all 0.15s;color:var(--muted);
+  font-size:10px;font-weight:500;text-align:center;line-height:1.2;
+  user-select:none;
+}
+.pvd-btn:hover{border-color:var(--border2);color:var(--text);background:var(--bg2)}
+.pvd-btn.active{
+  border-color:var(--accent);background:rgba(124,111,247,0.12);
+  color:var(--accent2);
+}
+.pvd-icon{font-size:15px;line-height:1}
+
+/* ── Row layout ── */
+.row{display:flex;gap:8px}
+.row .field{flex:1}
+.field-sm{flex:0 0 120px!important}
+
+/* ── Inputs ── */
+.field{display:flex;flex-direction:column;gap:5px}
+.inp{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;
+  color:var(--text);font-size:12px;outline:none;
+  transition:border-color 0.15s;font-family:inherit;
+}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--dim)}
+.inp-wrap{position:relative}
+.inp-wrap .inp{padding-right:34px}
+.eye-btn{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--muted);
+  font-size:14px;padding:2px;line-height:1;
+}
+.eye-btn:hover{color:var(--text)}
+
+/* ── Toggle row ── */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.toggle-label{color:var(--text);font-size:12px;font-weight:500}
+.toggle-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.toggle{
+  position:relative;width:36px;height:20px;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0}
+.slider{
+  position:absolute;inset:0;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:20px;cursor:pointer;transition:all 0.2s;
+}
+.slider::before{
+  content:'';position:absolute;
+  width:14px;height:14px;background:var(--muted);
+  border-radius:50%;top:2px;left:2px;transition:all 0.2s;
+}
+.toggle input:checked + .slider{background:var(--accent);border-color:var(--accent)}
+.toggle input:checked + .slider::before{transform:translateX(16px);background:#fff}
+.threshold-row{
+  display:flex;align-items:center;gap:8px;margin-top:9px;
+  font-size:12px;color:var(--muted);
+}
+.threshold-row .inp{width:60px;text-align:center;padding:6px 8px}
+
+/* ── Buttons ── */
+.actions{padding:12px 16px;display:flex;flex-direction:column;gap:7px}
+.btn-primary{
+  width:100%;padding:11px;
+  background:linear-gradient(135deg,#6c63ff,#a855f7);
+  border:none;border-radius:var(--radius);
+  color:#fff;font-size:13px;font-weight:600;letter-spacing:-0.2px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity 0.15s,transform 0.1s;
+}
+.btn-primary:hover{opacity:0.88}
+.btn-primary:active{transform:scale(0.98)}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.btn-ghost{
+  width:100%;padding:8px;
+  background:transparent;border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.15s;
+}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+
+/* ── Status ── */
+.status{
+  padding:0 16px 10px;min-height:22px;
+  font-size:12px;text-align:center;color:var(--muted);
+}
+.status.error{color:var(--error)}
+.status.ok{color:var(--success)}
+.spin{
+  display:inline-block;width:11px;height:11px;
+  border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin 0.65s linear infinite;
+  vertical-align:-2px;margin-right:5px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Results chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding:0 16px 12px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+}
+.chip-dot{width:6px;height:6px;border-radius:50%}
+
+/* color chips */
+.chip-blue{background:rgba(96,165,250,.13);color:#93c5fd}
+.chip-red{background:rgba(248,113,113,.13);color:#fca5a5}
+.chip-yellow{background:rgba(251,191,36,.13);color:#fde68a}
+.chip-green{background:rgba(52,211,153,.13);color:#6ee7b7}
+.chip-pink{background:rgba(244,114,182,.13);color:#f9a8d4}
+.chip-purple{background:rgba(167,139,250,.13);color:#c4b5fd}
+.chip-cyan{background:rgba(34,211,238,.13);color:#67e8f9}
+.chip-orange{background:rgba(251,146,60,.13);color:#fdba74}
+.chip-grey{background:rgba(156,163,175,.13);color:#d1d5db}
+
+/* dot colors */
+.dot-blue{background:#60a5fa}.dot-red{background:#f87171}.dot-yellow{background:#fbbf24}
+.dot-green{background:#34d399}.dot-pink{background:#f472b6}.dot-purple{background:#a78bfa}
+.dot-cyan{background:#22d3ee}.dot-orange{background:#fb923c}.dot-grey{background:#9ca3af}
+
+/* ── Collapsed extras ── */
+#customSection,#thresholdRow{display:none}
+#customSection.show,#thresholdRow.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-mark">TM</div>
+    <span class="logo-name">TabMind</span>
+  </div>
+  <span class="tab-pill" id="tabPill">– tabs</span>
+</div>
+
+<!-- Provider picker -->
+<div class="section">
+  <div class="label">AI Provider</div>
+  <div class="provider-grid" id="providerGrid"></div>
+</div>
+
+<!-- API Key + Model -->
+<div class="section">
+  <div class="row">
+    <div class="field" style="flex:1.6">
+      <div class="label">API Key</div>
+      <div class="inp-wrap">
+        <input class="inp" id="apiKey" type="password" placeholder="Paste your key..." autocomplete="off"/>
+        <button class="eye-btn" id="eyeBtn" title="Show/hide">👁</button>
+      </div>
+    </div>
+    <div class="field field-sm">
+      <div class="label">Model</div>
+      <input class="inp" id="model" type="text" placeholder="model-name"/>
+    </div>
+  </div>
+</div>
+
+<!-- Custom URL (shown only for custom provider) -->
+<div class="section" id="customSection">
+  <div class="label">Base URL</div>
+  <input class="inp" id="customUrl" type="text" placeholder="https://your-api.com/v1"/>
+</div>
+
+<!-- Auto-group -->
+<div class="section">
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-label">Auto-group</div>
+      <div class="toggle-sub">Group automatically when many tabs open</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="autoToggle"/>
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div id="thresholdRow">
+    <div class="threshold-row">
+      <span>Trigger when more than</span>
+      <input class="inp" id="threshold" type="number" min="3" max="50" value="10"/>
+      <span>tabs</span>
+    </div>
+  </div>
+</div>
+
+<!-- Buttons -->
+<div class="actions">
+  <button class="btn-primary" id="groupBtn">
+    <span id="btnSpinner" style="display:none"><span class="spin"></span></span>
+    <span id="btnText">✦ Group my tabs</span>
+  </button>
+  <button class="btn-ghost" id="ungroupBtn">Remove all groups</button>
+</div>
+
+<!-- Status -->
+<div class="status" id="status"></div>
+
+<!-- Result chips -->
+<div class="chips" id="chips"></div>
+
+<script src="popup.js"></script>
+</body>
+</html>
