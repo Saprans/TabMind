@@ -1,4 +1,4 @@
-// ─── Provider configs ────────────────────────────────────────────────────────
+// ─── Provider configs ───────────────────────────────────────────────────────
 const PROVIDERS = {
   claude:      { name: 'Claude',       url: 'https://api.anthropic.com',                          model: 'claude-opus-4-5',          adapter: 'anthropic', hint: 'sk-ant-api03-...' },
   openai:      { name: 'ChatGPT',      url: 'https://api.openai.com/v1',                          model: 'gpt-4o-mini',              adapter: 'openai',    hint: 'sk-...' },
@@ -17,7 +17,7 @@ const PROVIDERS = {
 
 const CHROME_COLORS = ['blue','red','yellow','green','pink','purple','cyan','orange','grey'];
 
-// ─── Message handler ──────────────────────────────────────────────────────────
+// ─── Message handler ───────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.action === 'groupTabs') {
     handleGroupTabs(msg)
@@ -72,9 +72,9 @@ async function handleGroupTabs({ tabs, provider, apiKey, model, customUrl }) {
     groups = await askAI({ tabs: validTabs, provider, baseUrl, apiKey, model, adapter: cfg.adapter });
   }
 
-  // Add system/untitled tabs to "Другое"
+  // Add system/untitled tabs to "Other"
   if (systemTabs.length > 0) {
-    groups.push({ name: 'Другое', tabIds: systemTabs.map(t => t.id) });
+    groups.push({ name: 'Other', tabIds: systemTabs.map(t => t.id) });
   }
 
   // Apply Chrome Tab Groups
@@ -101,7 +101,7 @@ async function handleGroupTabs({ tabs, provider, apiKey, model, customUrl }) {
   return { groups: result };
 }
 
-// ─── AI call dispatcher ───────────────────────────────────────────────────────
+// ─── AI call dispatcher ──────────────────────────────────────────────────────
 async function askAI({ tabs, provider, baseUrl, apiKey, model, adapter }) {
   const prompt = buildPrompt(tabs);
 
@@ -117,7 +117,7 @@ async function askAI({ tabs, provider, baseUrl, apiKey, model, adapter }) {
   return parseGroups(text, tabs);
 }
 
-// ─── Prompt builder ───────────────────────────────────────────────────────────
+// ─── Prompt builder ───────────────────────────────────────────────────────
 function buildPrompt(tabs) {
   const list = tabs.map(t => `[${t.id}] ${t.title} | ${t.url}`).join('\n');
   return `Group these browser tabs into 2-7 logical categories by topic.
@@ -134,7 +134,7 @@ Respond ONLY with valid JSON array, no markdown, no explanation:
 [{"name":"Work","tabIds":[1,2,3]},{"name":"Shopping","tabIds":[4]}]`;
 }
 
-// ─── Adapters ─────────────────────────────────────────────────────────────────
+// ─── Adapters ─────────────────────────────────────────────────────────
 async function callAnthropic(baseUrl, apiKey, model, prompt) {
   const res = await fetch(`${baseUrl}/v1/messages`, {
     method: 'POST',
@@ -145,7 +145,10 @@ async function callAnthropic(baseUrl, apiKey, model, prompt) {
       'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({ model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }] }),
+  }).catch(e => {
+    throw new Error(`Network error: ${e.message}`);
   });
+  
   if (!res.ok) throw new Error(await extractError(res, 'anthropic'));
   const data = await res.json();
   return data.content?.[0]?.text ?? '';
@@ -159,19 +162,29 @@ async function callOpenAI(baseUrl, apiKey, model, prompt) {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({ model, max_tokens: 1024, messages: [{ role: 'user', content: prompt }] }),
+  }).catch(e => {
+    throw new Error(`Network error: ${e.message}`);
   });
+  
   if (!res.ok) throw new Error(await extractError(res, 'openai'));
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? '';
 }
 
+// ─── FIX: Gemini API key in header, not URL ───────────────────────────────
 async function callGemini(baseUrl, apiKey, model, prompt) {
-  const url = `${baseUrl}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `${baseUrl}/v1beta/models/${model}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,  // FIXED: Key in header, not URL
+    },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+  }).catch(e => {
+    throw new Error(`Network error: ${e.message}`);
   });
+  
   if (!res.ok) throw new Error(await extractError(res, 'gemini'));
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
@@ -186,19 +199,48 @@ async function extractError(res, type) {
   }
 }
 
-// ─── JSON parser ──────────────────────────────────────────────────────────────
+// ─── JSON parser with improved error handling ────────────────────────────────
 function parseGroups(text, tabs) {
-  const clean = text.replace(/```json|```/g, '').trim();
-  const match = clean.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error('AI вернул не JSON. Попробуй ещё раз.');
+  if (!text || typeof text !== 'string') {
+    throw new Error('AI returned empty or invalid response');
+  }
 
-  const groups = JSON.parse(match[0]);
-  if (!Array.isArray(groups)) throw new Error('Неверный формат ответа.');
+  // Attempt 1: Clean markdown code blocks
+  let clean = text.replace(/```json|```/g, '').trim();
+  let match = clean.match(/\[[\s\S]*\]/);
+  
+  // Attempt 2: If first attempt failed, try more flexible parsing
+  if (!match) {
+    const lines = clean.split('\n').filter(l => l.includes('{') || l.includes('['));
+    clean = lines.join('');
+    match = clean.match(/\[[\s\S]*\]/);
+  }
+
+  if (!match) {
+    throw new Error('AI returned invalid JSON format. Please try again.');
+  }
+
+  let groups;
+  try {
+    groups = JSON.parse(match[0]);
+  } catch (e) {
+    throw new Error(`Failed to parse AI response: ${e.message}`);
+  }
+
+  if (!Array.isArray(groups)) {
+    throw new Error('AI response must be a JSON array');
+  }
 
   // Validate: ensure all tab IDs are valid numbers
   const validTabIds = new Set(tabs.map(t => t.id));
-  return groups
+  const validated = groups
     .filter(g => g.name && Array.isArray(g.tabIds) && g.tabIds.length > 0)
     .map(g => ({ ...g, tabIds: g.tabIds.filter(id => validTabIds.has(Number(id))).map(Number) }))
     .filter(g => g.tabIds.length > 0);
+
+  if (validated.length === 0) {
+    throw new Error('No valid groups were created from AI response');
+  }
+
+  return validated;
 }
